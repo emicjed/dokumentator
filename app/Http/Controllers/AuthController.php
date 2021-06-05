@@ -35,8 +35,10 @@ class AuthController extends Controller
                 'device_mac' => $mac
             ]);
 
+            // Podpiac mail sendera i wyslac maila
+            // do aktywacji konta.
             $response = [
-                'message' => 'Waiting for approval'
+                'message' => 'Plase check your email, and wait for approval by administrator'
             ];
 
             return response($response, 201);
@@ -63,6 +65,17 @@ class AuthController extends Controller
         if (!$user || !Hash::check($fields['password'], $user->password)) {
             return response([
                 'massage' => 'Wrong credentials'
+            ]);
+        }
+        $mac = substr(exec('getmac'), 0, 17);
+        $device_mac = DevicesMac::where('device_mac', $mac)->first();
+
+        if(!$device_mac){
+            // Wyslac maila do uzytkownika czy chce dodac ten mac adres jezeli
+            // jezeli tak to poprzez klikniecie w mailu  dodajemy nowy rekord
+            // do tabeli devices_macs z nowym mac adresem i tokenem uzytkownika
+            return response([
+                'massage' => 'Send email to authorize new device'
             ]);
         }
 
