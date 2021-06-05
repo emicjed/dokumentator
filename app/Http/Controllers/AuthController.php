@@ -22,35 +22,25 @@ class AuthController extends Controller
 
         $mac = substr(exec('getmac'), 0, 17);
 
-        if (!DevicesMac::where('device_mac', '=', $mac)->exists()) {
+        $user = User::create([
+            'name' => $fields['name'],
+            'email' => $fields['email'],
+            'user_token' => Helpers::generateUserToken(),
+            'password' => bcrypt($fields['password'])
+        ]);
+        $device_mac = DevicesMac::create([
+            'user_token' => $user->user_token,
+            'device_mac' => $mac
+        ]);
 
-            $user = User::create([
-                'name' => $fields['name'],
-                'email' => $fields['email'],
-                'user_token' => Helpers::generateUserToken(),
-                'password' => bcrypt($fields['password'])
-            ]);
-            $device_mac = DevicesMac::create([
-                'user_token' => $user->user_token,
-                'device_mac' => $mac
-            ]);
+        MailController::sendRegisterMail($user);
 
-            // Podpiac mail sendera i wyslac maila
-            // do aktywacji konta.
-            $response = [
-                'message' => 'Plase check your email, and wait for approval by administrator'
-            ];
+        $response = [
+            'message' => 'Plase check your email, and wait for approval by administrator'
+        ];
 
-            return response($response, 201);
-        } else {
-            // Podpiac mail sendera i wyslac maila z informacja ze
-            // probowano stworzyc konto ....
-            $response = [
-                'message' => 'Successfully send email reminder'
-            ];
+        return response($response, 201);
 
-            return response($response, 201);
-        }
     }
 
     public function login(Request $request)
@@ -68,12 +58,9 @@ class AuthController extends Controller
             ]);
         }
         $mac = substr(exec('getmac'), 0, 17);
-        $device_mac = DevicesMac::where('device_mac', $mac)->first();
-
+        $device_mac = DevicesMac::where('device_mac', $mac)->where('user_token', $user->user_token)->first();
         if(!$device_mac){
-            // Wyslac maila do uzytkownika czy chce dodac ten mac adres jezeli
-            // jezeli tak to poprzez klikniecie w mailu  dodajemy nowy rekord
-            // do tabeli devices_macs z nowym mac adresem i tokenem uzytkownika.
+            MailController::sendAuthorisationDeviceMail($user);
             return response([
                 'massage' => 'Send email to authorize new device'
             ]);
