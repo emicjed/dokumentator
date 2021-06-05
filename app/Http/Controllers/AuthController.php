@@ -73,7 +73,7 @@ class AuthController extends Controller
         if(!$device_mac){
             // Wyslac maila do uzytkownika czy chce dodac ten mac adres jezeli
             // jezeli tak to poprzez klikniecie w mailu  dodajemy nowy rekord
-            // do tabeli devices_macs z nowym mac adresem i tokenem uzytkownika
+            // do tabeli devices_macs z nowym mac adresem i tokenem uzytkownika.
             return response([
                 'massage' => 'Send email to authorize new device'
             ]);
